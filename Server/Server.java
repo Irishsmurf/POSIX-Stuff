@@ -5,66 +5,66 @@ import java.util.concurrent.*;
 
 // One thread per connection, this is it
 class ServerThread extends Thread {
-	// The socket passed from the creator
-	//Initialisation of Variables
-	private Socket socket = null;
-	private PrintWriter socketOut;
-	private BufferedReader br;
-	private BlockingQueue<String> messages; //Message Buffer
-	private String msg;
-	private String name;
-	private ArrayList<ServerThread> clients; // Connected Clients List
+  // The socket passed from the creator
+  //Initialisation of Variables
+  private Socket socket = null;
+  private PrintWriter socketOut;
+  private BufferedReader br;
+  private BlockingQueue<String> messages; //Message Buffer
+  private String msg;
+  private String name;
+  private ArrayList<ServerThread> clients; // Connected Clients List
 
-	public ServerThread(Socket socket, BlockingQueue<String> messages,
-	ArrayList<ServerThread>clients) {
-		this.socket = socket;
-		this.messages = messages;
-		this.clients = clients;
-		try {
-			socketOut = new PrintWriter(socket.getOutputStream(),true);
-			br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		}
-		catch(IOException e) {
-			System.out.println("Constructor Error");
-		}
-	}
+  public ServerThread(Socket socket, BlockingQueue<String> messages,
+  ArrayList<ServerThread>clients) {
+    this.socket = socket;
+    this.messages = messages;
+    this.clients = clients;
+    try {
+      socketOut = new PrintWriter(socket.getOutputStream(),true);
+      br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+    catch(IOException e) {
+      System.out.println("Constructor Error");
+    }
+  }
 
-	//Write to Socket.
-	public void write(String msg) {
-		socketOut.println(msg);
-	}
-	// Handle the connection
-	public void run() {
-		try {
-			//Read in first Line as sent by client which will be the username.
-			name = br.readLine();
-			messages.add(name+" has joined the chat server...");
-			while(true) {
-				//Read in the lines from the BufferedReader
-				msg = br.readLine();
-				//make sure the client is still alive, if it sends null
-				//the client is no longer responding and can be assumed dead.
-				if(msg != null) {
-					messages.add(name+" says: "+msg);
-				}
-				else {
-					//Connection closed;
-					messages.add(name+" has left the channel...");
-					//remove from Connected clients list.
-					clients.remove(clients.indexOf(this));
-					System.out.println("Clients: "+clients.size());
-					socket.close();
-					break;//exit while loop
-				}
-			}
-		}
-		catch (SocketException e) {
-			e.printStackTrace();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+  //Write to Socket.
+  public void write(String msg) {
+    socketOut.println(msg);
+  }
+  // Handle the connection
+  public void run() {
+    try {
+      //Read in first Line as sent by client which will be the username.
+      name = br.readLine();
+      messages.add(name+" has joined the chat server...");
+      while(true) {
+        //Read in the lines from the BufferedReader
+        msg = br.readLine();
+        //make sure the client is still alive, if it sends null
+        //the client is no longer responding and can be assumed dead.
+        if(msg != null) {
+          messages.add(name+" says: "+msg);
+        }
+        else {
+          //Connection closed;
+          messages.add(name+" has left the channel...");
+          //remove from Connected clients list.
+          clients.remove(clients.indexOf(this));
+          System.out.println("Clients: "+clients.size());
+          socket.close();
+          break;//exit while loop
+        }
+      }
+    }
+    catch (SocketException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 }
 
 //Removes messages from buffer and prints them to all the clients in the Client list.
@@ -79,22 +79,22 @@ class Consumer extends Thread
   }
 
   public void run() {
-	  while(true) {
-	    try {
-	      //take() waits until there is an
-	      //item at the head of the buffer
-	      String message = messages.take();
-	      //Take message and iterate through
-	      //all currently connected clients.
-	      for(ServerThread c:clients) {
-	        //Will then write to the Socket.
-	        c.write(message);
-	      }
-	    }
-	    catch(InterruptedException e) {
-	      System.out.println("BlockingQueue Interrupted");
-	    }
-	  }
+    while(true) {
+      try {
+        //take() waits until there is an
+        //item at the head of the buffer
+        String message = messages.take();
+        //Take message and iterate through
+        //all currently connected clients.
+        for(ServerThread c:clients) {
+          //Will then write to the Socket.
+          c.write(message);
+        }
+      }
+      catch(InterruptedException e) {
+        System.out.println("BlockingQueue Interrupted");
+      }
+    }
   }
 }
 // The server
